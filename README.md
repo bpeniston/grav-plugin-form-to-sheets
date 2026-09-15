@@ -88,6 +88,21 @@ form:
 
 **Put `sheets:` after `save:`.** `save:` writes to local disk and depends on nothing external, so letting it run first means a network problem at the Google end can never cost you the submission. Keep the local copy even once the Sheet is working — it's the only leg with no third-party dependency.
 
+## The Apps Script half
+
+The plugin is only half the system — it posts, and something has to receive. A working receiver is included as a template at **[`apps-script/Code.gs`](apps-script/Code.gs)**. Copy it into an Apps Script project bound to your spreadsheet (**Extensions → Apps Script**), fill in the configuration block, and follow the setup steps in its header comment.
+
+It handles rather more than appending a row, and each piece is there for a reason:
+
+- **Persist first, notify after.** The row is written before anything else is attempted, and only that step can fail the request.
+- **Every later step is isolated.** The team notification, the requester's confirmation, and an optional ticketing hook can each fail without costing the submission or showing the visitor an error.
+- **A weekly heartbeat, sent even at zero.** This is the part people skip and shouldn't. At a low submission volume, "no email this week" is the normal state — so it cannot also be the signal that something broke. The heartbeat reports the week's count, the date of the last request, the total on file, and any delivery problems recorded since it last ran. If it can't read the sheet it says so loudly rather than reporting a reassuring zero.
+- **A rolling failure log** in Script Properties, drained by the heartbeat and cleared only *after* the report naming those failures has actually been sent.
+- **A script lock** around the append, so two submissions arriving together can't race for the same row.
+- **Values forced to text** on write, so Sheets can't reinterpret a submitted value as a formula or a date.
+
+Read the header comment before deploying. The one decision worth making deliberately is **whose Google account owns the script** — it takes the triggers, the Script Properties and usually the spreadsheet with it when that account closes, and migrating later means a new `/exec` URL and a config change on the website.
+
 ## The endpoint contract
 
 The plugin POSTs a JSON body with `Content-Type: application/json`:
