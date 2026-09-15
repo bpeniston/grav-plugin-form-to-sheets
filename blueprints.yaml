@@ -1,0 +1,47 @@
+name: Form to Sheets
+slug: form-to-sheets
+type: plugin
+version: 0.1.0
+description: 'Adds a `sheets:` form process action that appends submissions to a Google Sheet via an Apps Script web app.'
+icon: table
+author:
+  name: 'FRC Team 449'
+  email: comms@navybook.com
+homepage: https://robot.mbhs.edu
+keywords: form, google, sheets, webhook
+bugs: https://robot.mbhs.edu
+license: MIT
+
+dependencies:
+  - { name: grav, version: '>=1.7.0' }
+  - { name: form, version: '>=7.0.0' }
+
+form:
+  validation: strict
+  fields:
+    enabled:
+      type: toggle
+      label: Plugin status
+      highlight: 1
+      default: 1
+      options:
+        1: Enabled
+        0: Disabled
+      validate:
+        type: bool
+    endpoint:
+      type: text
+      label: 'Apps Script web app URL'
+      description: 'The /exec URL from Deploy → Manage deployments. Kept server-side; never rendered into the page.'
+      placeholder: 'https://script.google.com/macros/s/.../exec'
+    secret:
+      type: text
+      label: 'Shared secret'
+      description: 'Sent with every POST. The Apps Script rejects requests that do not match, so only this site can write to the sheet.'
+    timeout:
+      type: number
+      label: 'Timeout (seconds)'
+      default: 10
+      validate:
+        min: 3
+        max: 30

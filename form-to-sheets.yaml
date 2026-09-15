@@ -1,0 +1,4 @@
+enabled: true
+endpoint: ''
+secret: ''
+timeout: 10
