@@ -14,6 +14,20 @@ Two problems, one solution.
 
 If your server *can* send mail, you can ignore the second half and use this purely to get rows into a spreadsheet.
 
+## Prior art
+
+There is no Google Sheets plugin in GPM — all 506 plugins in the catalog were checked by name and slug (September 2026), and a GitHub search outside GPM turned up nothing either.
+
+The one functional overlap is **[rest-form](https://github.com/andreaschiona/grav-plugin-rest-form)**, which adds a `rest:` action that POSTs form contents to a URL. It wasn't usable here, and the reasons are worth stating because they're the requirements this plugin exists to meet:
+
+- **It calls `die()` on failure** — twice. A non-2xx response or an error status kills the request mid-flight, so the visitor gets a broken page *and* every process action listed after it is abandoned. If `save:` is listed after it, a remote outage costs you the local backup too. This plugin instead swallows every failure and logs it.
+- **It reads `$_POST['data']` directly** rather than the validated form data, so honeypot and captcha fields are forwarded to the destination along with everything else.
+- **No shared secret** — the endpoint's URL is its only protection.
+- **No timeout** — a hanging endpoint hangs the submission.
+- Last commit November 2017, declares Grav 1.7 compatibility only.
+
+Adapting it would have meant rewriting the failure handling, the payload construction, and the auth model — which is most of the plugin.
+
 ## Requirements
 
 - Grav 1.7+

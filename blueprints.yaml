@@ -7,9 +7,9 @@ icon: table
 author:
   name: 'FRC Team 449'
   email: comms@navybook.com
-homepage: https://robot.mbhs.edu
+homepage: https://github.com/bpeniston/grav-plugin-form-to-sheets
 keywords: form, google, sheets, webhook
-bugs: https://robot.mbhs.edu
+bugs: https://github.com/bpeniston/grav-plugin-form-to-sheets/issues
 license: MIT
 
 dependencies:
