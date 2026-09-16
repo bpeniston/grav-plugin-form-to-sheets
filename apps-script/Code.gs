@@ -305,7 +305,13 @@ function appendRow_(sheet, data, submitted) {
   var row = [submitted];
   for (var i = 0; i < FIELDS.length; i++) {
     var v = data[FIELDS[i][0]];
-    row.push(v === null || v === undefined ? '' : String(v));
+    var s = (v === null || v === undefined) ? '' : String(v);
+    // Sheets parses a leading = + - @ (or tab/CR) as a FORMULA on write, even
+    // into a cell already formatted as text - confirmed by test on 2026-09-16,
+    // where a text-formatted cell still evaluated "=1+1" to 2. A leading
+    // apostrophe is Sheets' own 'treat this as text' marker: it is not stored
+    // in the value and not displayed. This is the actual defence.
+    row.push(/^[=+\-@\t\r]/.test(s) ? "'" + s : s);
   }
 
   // Two submissions arriving together must not race for the same row.
@@ -321,8 +327,10 @@ function appendRow_(sheet, data, submitted) {
     // which runs when someone opens the sheet and leaks the neighbouring cell.
     //
     // Casting to String() does NOT prevent this; it only sets the JavaScript
-    // type. The defence is formatting the destination cells as plain text ('@')
-    // BEFORE writing, so Sheets stores the characters literally.
+    // type. Formatting the cells as text ('@') is kept below for display
+    // consistency, but it is NOT the defence either - it was tried first and
+    // the formula still evaluated. The escaping in the loop above is what
+    // actually works.
     var target = sheet.getRange(sheet.getLastRow() + 1, 1, 1, row.length);
     target.setNumberFormat('@');
     target.setValues([row]);
